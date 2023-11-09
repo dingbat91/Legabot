@@ -10,15 +10,13 @@ This file holds the class that represents a family character sheet for Legacy: L
     ! Inheritance
     ! Characters
     ! Resources
-    ! Family Moves
-        ? Class
     ! Family Questions
 """
 
 
 class FamilySheet:
     # Basic info
-    id: int
+    __id: int
     name: str
 
     # Stats
@@ -26,17 +24,14 @@ class FamilySheet:
     grasp: int
     sleight: int
 
-    # Alliance Treaties
+    # Alliance Move/Treaties
     alliance_move: str
+    # treaties:
     treaties: list[dict]
-
     # Family Data
     doctrine: list[dict]
     lifestyle: list[dict]
-    assets: list[dict]
     traditions: list[dict]
-    landmarks: list[dict]
-    projects: list[dict]
 
     # Characters & Character Inheritance
     Inheritance: dict
@@ -52,7 +47,7 @@ class FamilySheet:
     family_questions: list[dict]
 
     def __init__(self, name: str, owner: int, reach: int, grasp: int, sleight: int):
-        self.id = uuid.uuid4().int
+        self._id = uuid.uuid4().int
         self.owner = int
         self.name = name
         self.reach = reach
@@ -61,71 +56,25 @@ class FamilySheet:
         self.treaties = []
         self.doctrine = []
         self.lifestyle = []
-        self.assets = []
         self.traditions = []
-        self.landmarks = []
-        self.projects = []
-        self.Inheritance = {}
+        self.Inheritance = {"stat": {"choice_1": "", "choice_2": ""}, "moves": []}
         self.surplus = []
         self.needs = []
         self.mood = 0
         self.data = 0
         self.tech = 0
 
-        # Set the stats
-        def setStats(self, reach: int, grasp: int, sleight: int):
-            self.reach = reach
-            self.grasp = grasp
-            self.sleight = sleight
+    def __str__(self):
+        return f"FamilySheet: {self.name}, ID: {self._id}"
 
-        # Get the stats
-        def getStats(self):
-            return self.reach, self.grasp, self.sleight
+    def __eq__(self, other):
+        return self._id == other._id
 
-        # Set the alliance move
-        def setAllianceMove(self, move: str):
-            self.alliance_move = move
+    @property
+    def id(self):
+        return self._id
 
-        # Get the alliance move
-        def getAllianceMove(self):
-            return self.alliance_move
 
-        # Add a family to the treaty list
-        def addfamily(self, family: str, treaty: dict):
-            treaty = {"family": family, "points": {"to": 0, "from": 0}}
-
-        # Get a list of all treaties
-        def getTreatiesList(self):
-            return self.treaties
-
-        # Get a treaty by family name
-        def getTreaty(self, family: str):
-            for treaty in self.treaties:
-                if treaty["family"] == family:
-                    return treaty
-            return None
-
-        # add a treaty point to a family
-        def addTreatypoint(self, family: str, direction: str, amount: int):
-            treaty = self.getTreaty(family)
-            if direction is not "to" or direction is not "from":
-                raise ValueError("direction must be 'to' or 'from'")
-            if treaty is not None:
-                treaty["points"][direction] += amount
-                return True
-            else:
-                return False
-
-        # Remove a Treaty point from a family
-        def removeTreatypoint(self, family: str, direction: str, amount: int):
-            treaty = self.getTreaty(family)
-            if direction is not "to" or direction is not "from":
-                raise ValueError("direction must be 'to' or 'from'")
-            if treaty is not None:
-                treaty["points"][direction] -= amount
-                # Can't be less that 0
-                if treaty["points"][direction] < 0:
-                    treaty["points"][direction] = 0
-                return True
-            else:
-                return False
+if __name__ == "__main__":
+    print("This file is not meant to be run directly")
+    exit(1)
