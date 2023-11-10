@@ -5,7 +5,6 @@ import os
 import logging
 import typing
 
-
 # Set Logging level and format
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s: %(levelname)s - %(message)s"
@@ -27,12 +26,14 @@ class Client(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix="!", intents=discord.Intents().all())
 
+    ## On ready event
     async def on_ready(self):
         logging.info(f"{self.user} has connected to Discord!")
         synced = await self.tree.sync()
         logging.info(f"Synced {len(synced)} commands")
         logging.info(f"message content enabled: {self.intents.messages}")
 
+    ## Sync commands
     async def setup_hook(self):
         for folder in os.listdir("cogs"):
             if os.path.exists(os.path.join("cogs", folder, "cog.py")):
@@ -40,5 +41,6 @@ class Client(commands.Bot):
                 await self.load_extension(f"cogs.{folder}.cog")
 
 
-client = Client()
-client.run(TOKEN)
+if __name__ == "__main__":
+    client = Client()
+    client.run(TOKEN)

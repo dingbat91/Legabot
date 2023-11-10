@@ -12,7 +12,9 @@ class testcommands(commands.Cog, name="Test Commands"):
 
     @app_commands.command(name="hello")
     async def hello(self, interaction: discord.Interaction):
-        await interaction.response.send_message("hello")
+        await interaction.response.send_message(
+            f"hello {interaction.user.mention}", ephemeral=True
+        )
 
 
 async def setup(client: commands.Bot):

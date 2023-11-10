@@ -70,9 +70,6 @@ class FamilySheet(base):
     landmarks: Mapped[List] = mapped_column(JSON)
     history: Mapped[List] = mapped_column(JSON)
 
-    def __repr__(self):
-        return f"FamilySheet(name={self.name}, owner={self.owner}, reach={self.reach}, grasp={self.grasp}, sleight={self.sleight})"
-
 
 class FamilyMoves(base):
     __tablename__ = "family_moves"
