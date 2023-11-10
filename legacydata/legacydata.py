@@ -2,6 +2,7 @@ from sqlalchemy import (
     ForeignKey,
     String,
     Integer,
+    BigInteger,
     create_engine,
     select,
     Table,
@@ -34,14 +35,44 @@ class base(DeclarativeBase):
 
 ## SQLAlchemy classes
 
+## Association tables
+ownedfamilies_table = Table(
+    "owned_families",
+    base.metadata,
+    Column("user_id", Integer, ForeignKey("legacy_user.id")),
+    Column("family_id", Integer, ForeignKey("family.id")),
+    Column("selected_stat", Integer),
+    Column("selected_doctrine", Integer),
+    Column("selected_lifestyle", Integer),
+    Column("selected_tradition", Integer),
+    Column("selected_landmark", Integer),
+    Column("selected_history", Integer),
+    Column("selected_moves", Integer),
+)
+
+assocfamilymoves_table = Table(
+    "association_table_family_moves",
+    base.metadata,
+    Column("family_id", Integer, ForeignKey("family.id")),
+    Column("move_id", Integer, ForeignKey("family_moves.id")),
+)
+
+assocharactermoves_table = Table(
+    "association_table_character_moves",
+    base.metadata,
+    Column("character_id", Integer, ForeignKey("character.id")),
+    Column("move_id", Integer, ForeignKey("character_moves.id")),
+)
+
 
 ## User class
 class User(base):
-    __tablename__ = "user"
+    __tablename__ = "legacy_user"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String)
+    discord_id: Mapped[int] = mapped_column(BigInteger)
     families: Mapped[List["FamilySheet"]] = relationship(
-        "FamilySheet", secondary="owned_families"
+        "FamilySheet", secondary=ownedfamilies_table, back_populates="users"
     )
 
 
@@ -52,23 +83,27 @@ class FamilySheet(base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String)
     moves: Mapped[List["FamilyMoves"]] = relationship(
-        "FamilyMoves", secondary="association_table_family_moves"
+        "FamilyMoves", secondary=assocfamilymoves_table, back_populates="family"
     )
-    users: Mapped[List[User]] = relationship("User", secondary="owned_families")
-    description: Mapped[str] = mapped_column(String)
-    reach: Mapped[int] = mapped_column(Integer)
-    grasp: Mapped[int] = mapped_column(Integer)
-    sleight: Mapped[int] = mapped_column(Integer)
-    mood: Mapped[int] = mapped_column(Integer)
-    data: Mapped[int] = mapped_column(Integer)
-    tech: Mapped[int] = mapped_column(Integer)
-    needs: Mapped[list] = mapped_column(JSON)
-    surpluses: Mapped[List] = mapped_column(JSON)
-    doctrine: Mapped[List] = mapped_column(JSON)
-    lifestyle: Mapped[List] = mapped_column(JSON)
-    traditions: Mapped[List] = mapped_column(JSON)
-    landmarks: Mapped[List] = mapped_column(JSON)
-    history: Mapped[List] = mapped_column(JSON)
+    users: Mapped[List[User]] = relationship(
+        "User", secondary=ownedfamilies_table, back_populates="families"
+    )
+    reach: Mapped[int] = mapped_column(Integer, default=0)
+    grasp: Mapped[int] = mapped_column(Integer, default=0)
+    sleight: Mapped[int] = mapped_column(Integer, default=0)
+    mood: Mapped[int] = mapped_column(Integer, default=0)
+    data: Mapped[int] = mapped_column(Integer, default=0)
+    tech: Mapped[int] = mapped_column(Integer, default=0)
+    needs: Mapped[list] = mapped_column(JSON, default=list)
+    surpluses: Mapped[List] = mapped_column(JSON, default=list)
+    doctrine: Mapped[List] = mapped_column(JSON, default=list)
+    lifestyle: Mapped[List] = mapped_column(JSON, default=list)
+    traditions: Mapped[List] = mapped_column(JSON, default=list)
+    landmarks: Mapped[List] = mapped_column(JSON, default=list)
+    history: Mapped[List] = mapped_column(JSON, default=list)
+
+    def __str__(self):
+        return f"ID: {self.id} name:{self.name}:"
 
 
 class FamilyMoves(base):
@@ -78,7 +113,7 @@ class FamilyMoves(base):
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
     family: Mapped[List[FamilySheet]] = relationship(
-        "FamilySheet", secondary="association_table_family_moves"
+        "FamilySheet", secondary=assocfamilymoves_table, back_populates="moves"
     )
 
     def __repr__(self):
@@ -88,21 +123,34 @@ class FamilyMoves(base):
 # Character Classes
 
 
+class Gear(base):
+    __tablename__ = "gear"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("character.id"))
+    owner: Mapped["Character"] = relationship("Character", back_populates="gear")
+    name: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(String)
+    tags: Mapped[List] = mapped_column(JSON)
+
+
 class Character(base):
     __tablename__ = "character"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String)
     family: Mapped[int] = mapped_column(Integer, ForeignKey("family.id"))
-    user: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
+    user: Mapped[int] = mapped_column(Integer, ForeignKey("legacy_user.id"))
     stat_options: Mapped[List] = mapped_column(JSON)
     role_details: Mapped[List] = mapped_column(JSON)
     harm_options: Mapped[List] = mapped_column(JSON)
     death_move: Mapped[str] = mapped_column(String)
     character_moves: Mapped[List["CharacterMove"]] = relationship(
-        "CharacterMove", secondary="association_table_character_moves"
+        "CharacterMove",
+        secondary=assocharactermoves_table,
+        back_populates="characters_using",
     )
-    gear: Mapped[List["Gear"]] = relationship("gear", back_populates="owner")
+    gear: Mapped[List["Gear"]] = relationship("Gear", back_populates="owner")
 
 
 class CharacterMove(base):
@@ -112,19 +160,10 @@ class CharacterMove(base):
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
     characters_using: Mapped[List[Character]] = relationship(
-        "Character", secondary="association_table_character_moves"
+        "Character",
+        secondary=assocharactermoves_table,
+        back_populates="character_moves",
     )
-
-
-class Gear(base):
-    __tablename__ = "gear"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("character.id"))
-    owner: Mapped[Character] = relationship("character", back_populates="gear")
-    name: Mapped[str] = mapped_column(String)
-    description: Mapped[str] = mapped_column(String)
-    tags: Mapped[List] = mapped_column(JSON)
 
 
 ## Game operation Tables
@@ -137,36 +176,6 @@ class PostedMove(base):
     family: Mapped[int] = mapped_column(Integer, ForeignKey("family.id"))
     details: Mapped[str] = mapped_column(String)
     cancelled: Mapped[bool] = mapped_column(Integer)
-
-
-## Association tables
-OwnedFamilies_table = Table(
-    "owned_families",
-    base.metadata,
-    Column("user_id", Integer, ForeignKey("user.id")),
-    Column("family_id", Integer, ForeignKey("family.id")),
-    Column("selected_stat", Integer),
-    Column("selected_doctrine", Integer),
-    Column("selected_lifestyle", Integer),
-    Column("selected_tradition", Integer),
-    Column("selected_landmark", Integer),
-    Column("selected_history", Integer),
-    Column("selected_moves", Integer),
-)
-
-AssocFamilyMoves_table = Table(
-    "association_table_family_moves",
-    base.metadata,
-    Column("family_id", Integer, ForeignKey("family.id")),
-    Column("move_id", Integer, ForeignKey("family_moves.id")),
-)
-
-AssocCharacterMoves_table = Table(
-    "association_table_character_moves",
-    base.metadata,
-    Column("character_id", Integer, ForeignKey("character.id")),
-    Column("move_id", Integer, ForeignKey("character_moves.id")),
-)
 
 
 # Debugging db test code

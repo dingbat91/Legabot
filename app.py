@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import os
 import logging
 import typing
+import sys
+from misc.db import get_session
 
 # Set Logging level and format
 logging.basicConfig(
