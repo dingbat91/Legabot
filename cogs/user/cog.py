@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord import app_commands
 import discord
 from legacydata.legacydata import FamilySheet, User
-from misc.db import get_session
+from misc.db import get_session, get_user
 
 
 class usercommands(commands.Cog, name="user commands"):
@@ -17,34 +17,21 @@ class usercommands(commands.Cog, name="user commands"):
     )
     async def setupUser(self, interaction: discord.Interaction):
         session = get_session()
-        existing_user = (
-            session.query(User).filter_by(discord_id=interaction.user.id).first()
-        )
-        if existing_user:
-            print("user already exists")
+        user = await get_user(interaction, session=session)
+        if user is not None:
             await interaction.response.send_message(
-                f"{interaction.user.mention} your already registered!",
-                ephemeral=True,
+                "You are already registered", ephemeral=True
             )
             return
-        else:
-            user = User(username=interaction.user.name, discord_id=interaction.user.id)
-            session.add(user)
-            session.commit()
-            existing_user = (
-                session.query(User).filter_by(discord_id=interaction.user.id).first()
-            )
-            print("added user")
+        # Creates user is one doesn't exist
+        session = get_session()
+        user = User(username=interaction.user.name, discord_id=interaction.user.id)
+        session.add(user)
+        session.commit()
         session.close()
-        if existing_user:
-            await interaction.response.send_message(
-                f"{interaction.user.mention}: Registered user {existing_user.username}",
-                ephemeral=True,
-            )
-        else:
-            await interaction.response.send_message(
-                f"Failed to register user {interaction.user.name}", ephemeral=True
-            )
+        await interaction.response.send_message(
+            f"Registered {interaction.user.name}", ephemeral=True, delete_after=10
+        )
 
 
 async def setup(client: commands.Bot):

@@ -19,7 +19,7 @@ class testcommands(commands.Cog, name="Test Commands"):
         )
 
     @commands.is_owner()
-    @app_commands.command(name="reload", description="Reloads all bogs")
+    @app_commands.command(name="reload", description="Reloads all Cogs")
     async def reload(
         self,
         interaction: discord.Interaction,
@@ -33,7 +33,9 @@ class testcommands(commands.Cog, name="Test Commands"):
             description="Extensions successfully reloaded",
             color=0xFF00C8,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(
+            embed=embed, ephemeral=True, delete_after=5
+        )
 
 
 async def setup(client: commands.Bot):

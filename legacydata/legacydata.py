@@ -74,6 +74,11 @@ class User(base):
     families: Mapped[List["FamilySheet"]] = relationship(
         "FamilySheet", secondary=ownedfamilies_table, back_populates="users"
     )
+    selected_family: Mapped[Optional[int]] = mapped_column(Integer)
+
+    def __init__(self, username: str, discord_id: int):
+        self.username = username
+        self.discord_id = discord_id
 
 
 ## Family Classes
@@ -101,6 +106,12 @@ class FamilySheet(base):
     traditions: Mapped[List] = mapped_column(JSON, default=list)
     landmarks: Mapped[List] = mapped_column(JSON, default=list)
     history: Mapped[List] = mapped_column(JSON, default=list)
+
+    def __init__(self, name: str, reach: int, grasp: int, sleight: int):
+        self.name = name
+        self.reach = reach
+        self.grasp = grasp
+        self.sleight = sleight
 
     def __str__(self):
         return f"ID: {self.id} name:{self.name}:"
