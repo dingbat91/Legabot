@@ -1,37 +1,37 @@
 from discord.ext import commands
 from discord import app_commands
 import discord
-from legacydata.legacydata import FamilySheet, User
-from misc.db import get_session, get_user
+from legacydata.legacydata import Family, User
+from misc.db import sessionManager
 
 
-class usercommands(commands.Cog, name="user commands"):
+class usercommands(commands.GroupCog, group_name="user"):
     """commands for managing and registering a user"""
 
     def __init__(self, client: commands.Bot):
         self.client = client
         self._last_member = None
 
-    @app_commands.command(
-        name="register_user", description="Registers a new user to the system"
-    )
-    async def setupUser(self, interaction: discord.Interaction):
-        session = get_session()
-        user = await get_user(interaction, session=session)
-        if user is not None:
-            await interaction.response.send_message(
-                "You are already registered", ephemeral=True
-            )
-            return
-        # Creates user is one doesn't exist
-        session = get_session()
-        user = User(username=interaction.user.name, discord_id=interaction.user.id)
-        session.add(user)
-        session.commit()
-        session.close()
-        await interaction.response.send_message(
-            f"Registered {interaction.user.name}", ephemeral=True, delete_after=10
-        )
+    @app_commands.commands.command(name="register", description="Registers a user")
+    async def register(
+        self,
+        interaction: discord.Interaction,
+    ):
+        session = sessionManager()
+        with session as s:
+            user = s.query(User).filter(User.discord_id == interaction.user.id).first()
+            if user is None:
+                user = User(
+                    discord_id=interaction.user.id, username=interaction.user.name
+                )
+                s.add(user)
+                await interaction.response.send_message(
+                    "User registered", ephemeral=True, delete_after=10
+                )
+            else:
+                await interaction.response.send_message(
+                    "User already registered", ephemeral=True, delete_after=10
+                )
 
 
 async def setup(client: commands.Bot):

@@ -5,7 +5,7 @@ import os
 import logging
 
 
-class testcommands(commands.Cog, name="Test Commands"):
+class testcommands(commands.GroupCog, group_name="tests"):
     """A list of commands for testing the bot"""
 
     def __init__(self, client: commands.Bot):

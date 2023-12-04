@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from sqlalchemy.orm import close_all_sessions
+from misc.db import sessionBuilder
 import os
 import logging
 import typing
 import sys
-from misc.db import get_session
 
 # Set Logging level and format
 logging.basicConfig(
@@ -44,5 +45,11 @@ class Client(commands.Bot):
 
 
 if __name__ == "__main__":
+    ## initialise tables
+    builder = sessionBuilder()
+    builder.initialiseDB()
+    ## runs the bot
     client = Client()
     client.run(TOKEN)
+    ## closes any remaining open DB sessions if the bot is closed
+    close_all_sessions()

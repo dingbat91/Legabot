@@ -71,8 +71,8 @@ class User(base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String)
     discord_id: Mapped[int] = mapped_column(BigInteger)
-    families: Mapped[List["FamilySheet"]] = relationship(
-        "FamilySheet", secondary=ownedfamilies_table, back_populates="users"
+    families: Mapped[List["Family"]] = relationship(
+        "Family", secondary=ownedfamilies_table, back_populates="users"
     )
     selected_family: Mapped[Optional[int]] = mapped_column(Integer)
 
@@ -82,7 +82,7 @@ class User(base):
 
 
 ## Family Classes
-class FamilySheet(base):
+class Family(base):
     __tablename__ = "family"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -107,7 +107,7 @@ class FamilySheet(base):
     landmarks: Mapped[List] = mapped_column(JSON, default=list)
     history: Mapped[List] = mapped_column(JSON, default=list)
 
-    def __init__(self, name: str, reach: int, grasp: int, sleight: int):
+    def __init__(self, name: str, reach: int = 0, grasp: int = 0, sleight: int = 0):
         self.name = name
         self.reach = reach
         self.grasp = grasp
@@ -123,8 +123,8 @@ class FamilyMoves(base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    family: Mapped[List[FamilySheet]] = relationship(
-        "FamilySheet", secondary=assocfamilymoves_table, back_populates="moves"
+    family: Mapped[List[Family]] = relationship(
+        "Family", secondary=assocfamilymoves_table, back_populates="moves"
     )
 
     def __repr__(self):
