@@ -3,7 +3,7 @@ from discord import app_commands, Interaction, Embed
 from discord.ui import Select, View
 from legacydata.legacydata import Family, User
 from misc.db import sessionManager
-from menu.family import selectDropdown, familyMenu
+from menu.family import selectFamily, familyMenu, deleteFamily
 import logging
 
 
@@ -44,7 +44,7 @@ class familycommands(commands.GroupCog, group_name="family"):
     @app_commands.command(name="select", description="Selects a family to manage")
     async def selectFamily(self, interaction: Interaction):
         view = View()
-        view.add_item(selectDropdown(interaction.user.id))
+        view.add_item(selectFamily(interaction.user.id))
         await interaction.response.send_message(
             content="Select a family", ephemeral=True, view=view
         )
@@ -59,6 +59,29 @@ class familycommands(commands.GroupCog, group_name="family"):
             embed=embed,
             view=view,
             delete_after=120,
+        )
+
+    @app_commands.command(name="delete", description="Deletes a family")
+    async def delete(self, interaction: Interaction):
+        session = sessionManager()
+        user = session.getUser(interaction.user.id)
+        if len(user.families) == 0:
+            await interaction.response.send_message(
+                "You have no families to delete", ephemeral=True
+            )
+            return
+        view = View()
+        try:
+            view.add_item(deleteFamily(discordid=interaction.user.id))
+        except Exception as e:
+            logging.error(e)
+            await interaction.response.send_message(
+                f"An error occured. Error:{e}", ephemeral=True, delete_after=20
+            )
+        await interaction.response.send_message(
+            content="Select a family to delete.\n**This is final there is no further confirmation!**",
+            ephemeral=True,
+            view=view,
         )
 
 
