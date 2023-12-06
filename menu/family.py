@@ -9,6 +9,7 @@ from misc.db import sessionManager
 from legacydata.legacydata import Family, User, FamilyMoves
 import logging
 from sqlalchemy.orm import Mapped, Session, joinedload
+from menu.moves import familyMoveList, createMovelistEmbed
 
 
 ##! Select Family Classes
@@ -145,6 +146,15 @@ class familyMenu(View):
                 custom_id="Rename",
             )
         )
+        self.add_item(
+            moveMenuButton(
+                label="Moves",
+                session=self.session,
+                family=self.family,
+                style=ButtonStyle.secondary,
+                row=3,
+            )
+        )
         ## Iterates through the stats and resources and adds buttons for each
         for stat in self.__stats:
             self.add_item(
@@ -255,6 +265,41 @@ class renameButton(Button):
             title="Rename Family", session=self.session, family=self.family
         )
         await interaction.response.send_modal(modal)
+
+
+class moveMenuButton(Button):
+    family: Family
+    session: sessionManager
+
+    def __init__(
+        self,
+        *,
+        style: ButtonStyle = ButtonStyle.secondary,
+        label: str | None = None,
+        disabled: bool = False,
+        custom_id: str | None = None,
+        url: str | None = None,
+        emoji: str | Emoji | PartialEmoji | None = None,
+        row: int | None = None,
+        session: sessionManager,
+        family: Family,
+    ):
+        super().__init__(
+            style=style,
+            label=label,
+            disabled=disabled,
+            custom_id=custom_id,
+            url=url,
+            emoji=emoji,
+            row=row,
+        )
+        self.family = family
+        self.session = session
+
+    async def callback(self, interaction: Interaction):
+        View = familyMoveList(discord_id=interaction.user.id)
+        embed = createMovelistEmbed(family=self.family)
+        await interaction.response.send_message(embed=embed, view=View, ephemeral=True)
 
 
 ##! Modal section

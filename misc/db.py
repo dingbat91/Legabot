@@ -41,9 +41,8 @@ class sessionManager:
     def __del__(self):
         self.session.close()
 
-    ## checks if a user is registered, returns the user if they are, false if they are not
-    ## done as it's own function as it's regularly accessed
     def getUser(self, discord_id: int):
+        """Gets a user from the DB"""
         try:
             user = (
                 self.session.query(User).filter(User.discord_id == discord_id).first()
@@ -55,12 +54,31 @@ class sessionManager:
             logging.error(e)
             raise e
 
+    def getSelectedFamily(self, user: User):
+        """Gets a users selected family from the DB"""
+        try:
+            if user.selected_family is None:
+                raise ValueError("No family selected")
+            family = (
+                self.session.query(Family)
+                .filter(Family.id == user.selected_family)
+                .first()
+            )
+            if family is None:
+                raise ValueError("Family not found")
+            return family
+        except Exception as e:
+            logging.error(e)
+            raise e
+
     ## when entered as a context manager, returns the session
     def __enter__(self):
+        """Returns the session for use in a context manager"""
         return self.session
 
     ## when exited as a context manager, commits the session, rolls back if an error is raised
     def __exit__(self, exc_type, exc_value, traceback):
+        """Commits the session, rolls back if an error is raised"""
         if exc_type is not None:
             self.session.rollback()
             logging.error(exc_value)
